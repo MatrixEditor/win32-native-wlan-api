@@ -1,0 +1,15 @@
+# Copy that file to the root folder and type 'cmake' into the console
+cmake_minimum_required(VERSION 3.0.0)
+project(capture VERSION 0.1.0)
+
+add_executable(capture.test 
+  win32/native/src/win32pcap.c 
+  win32/native/src/win32wlan.c
+  win32/native/src/802dot11fmt.c
+  tests/capture.test.c
+)
+
+if(WIN32)
+  target_link_libraries(capture.test wlanapi)
+  target_link_libraries(capture.test Shlwapi)
+endif()

@@ -36,7 +36,7 @@ DWORD __atop_pcap_dump(WLANAPI_BEACON_FRAME *_Frame, FILE *_File)
   BYTE _Data[36] = { 0 };
   DWORD i = 0;
 
-  _Data[i++] = 0x00, _Data[i++] = 0x80;
+  _Data[i++] = 0x80, _Data[i++] = 0x00;
   i+=2; //skip duration
   memset((VOID *)(_Data + i), 0xff, 6); i+=6; //MAC
   memcpy((VOID *)(_Data + i), _Frame->header.ucBSSID, 6); i+=6;

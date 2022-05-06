@@ -16,6 +16,7 @@
 #define AsMAC(str, mac) sprintf(str, "%x:%x:%x:%x:%x:%x", mac[0], mac[1], mac[2], mac[3], mac[4], mac[5])
 
 __static VOID __out_802_frame_bc_header(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options);
+__static VOID __out_802_frame_bc_radio(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options);
 __static VOID __out_802_frame_bc_body(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options);
 __static VOID __out_802_ie(__const PWLANAPI_IE_BLOB _Ie, DWORD _Options, BOOLEAN _End);
 
@@ -26,11 +27,11 @@ STRING __atov_ie_name(__const DWORD _IeId) {
     CASE2(IE_SSID, "SSID")                               
     CASE2(IE_SUPPORTED_RATES, "Supported Rates")                    
     CASE(IE_FH_PARAMETER_SET)                   
-    CASE(IE_DSSS_PARAMETER_SET)                 
+    CASE2(IE_DSSS_PARAMETER_SET, "DS Parameter set")                 
     CASE(IE_CF_PARAMETER_SET)                   
     CASE(IE_TIM)                                
     CASE(IE_IBSS_PARAMETER_SET)                 
-    CASE(IE_COUNTRY)                            
+    CASE2(IE_COUNTRY, "Country Information")                            
     CASE(IE_HOPPING_PATTERN_PARAMETERS)         
     CASE(IE_HOPPING_PATTERN_TABLE)              
     CASE(IE_REQUEST)                             
@@ -40,7 +41,7 @@ STRING __atov_ie_name(__const DWORD _IeId) {
     CASE(IE_TCLAS)                               
     CASE(IE_SCHEDULE)                            
     CASE(IE_CHALLENGE_TEXT)                      
-    CASE(IE_POWER_CONSTRAINT)                    
+    CASE2(IE_POWER_CONSTRAINT, "Power Constraint")                    
     CASE(IE_POWER_CAPABILITY)                    
     CASE(IE_TPC_REQUEST)                         
     CASE(IE_TPC_REPORT)                          
@@ -157,6 +158,41 @@ STRING __atov_ie_name(__const DWORD _IeId) {
 #undef CASE
 }
 
+STRING GetPHYDescription(WLANAPI_DOT11_PHY_TYPE _Type) {
+  switch (_Type) {
+    case erp: {
+      return "802.11g (ERP) (6)";
+    }
+    case ht: {
+      return "802.11n (HT) (7)";
+    }
+    case vht: {
+      return "802.11ac (VHT) (8)";
+    }
+    case ofm: {
+      return "802.11a (OFM) (4)";
+    }
+    case phy_any: {
+      return "Any/Unknown (0)";
+    }
+    case fhss: {
+      return "FHSS (1)";
+    }
+    case dsss: {
+      return "DSSS (2)";
+    }
+    case irbaseband: {
+      return "infrared (IR) baseband";
+    }
+    case hrdsss: {
+      return "high-rate DSSS (HRDSSS)";
+    }
+    default: {
+      return "<>";
+    }
+  }
+}
+
 #define __ETH_FRAME_LINE_SEP \
 "============================================================================\n"
 
@@ -185,14 +221,14 @@ __ETH_FRAME_LINE_SEP
 "'= %s 0x00\n"
 
 #define __ETH_NODE_IE_COL \
-"|   |- \033[4;94m%s\033[0m \033[91mID=\033[0m%i \033[91mLen=\033[0m%i %s\n"
+"|   |- \033[4;94m%s\033[0m \033[91mID=\033[0m%i \033[91mLen=\033[0m%i %s"
 #define __ETH_NODE_IE \
-"|   |- %s ID=%i Len=%i %s\n"
+"|   |- %s ID=%i Len=%i %s"
 
 #define __ETH_NODE_IE_END_COL \
-"|   '- \033[4;94m%s\033[0m \033[91mID=\033[0m%i \033[91mLen=\033[0m%i %s\n"
+"|   '- \033[4;94m%s\033[0m \033[91mID=\033[0m%i \033[91mLen=\033[0m%i %s|\n"
 #define __ETH_NODE_IE_END \
-"|   '- %s ID=%i Len=%i %s\n"
+"|   '- %s ID=%i Len=%i %s|\n"
 
 VOID __out_802_frame(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options) {
   if (!_Frame) {
@@ -201,14 +237,42 @@ VOID __out_802_frame(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options) {
   }
 
   printf(__ETH_FRAME_TREE_HEADER);
-  printf(_Options ? __ETH_FRAME_TREE_NODE_COL : __ETH_FRAME_TREE_NODE, "802.11 MAC Header");
-  //out header
+  printf(_Options ? __ETH_FRAME_TREE_NODE_COL : __ETH_FRAME_TREE_NODE, "802.11 radio information");
+  __out_802_frame_bc_radio(_Frame, _Options);
+
+  printf(_Options ? __ETH_FRAME_TREE_NODE_COL : __ETH_FRAME_TREE_NODE, "IEEE 802.11 MAC Header");
   __out_802_frame_bc_header(_Frame, _Options);
+  
   printf(_Options ? __ETH_FRAME_TREE_NODE_COL : __ETH_FRAME_TREE_NODE, 
-    _Frame->ieSSID.ieSize > 0 ? "802.11 Management - Beacon" : "802.11 Management - Probe Request");
-  //out body
+    _Frame->ieSSID.ieSize > 0 ? "IEEE 802.11 Management - Beacon" : "IEEE 802.11 Management - Probe Response");
   __out_802_frame_bc_body(_Frame, _Options);
+  
   printf(_Options ? __ETH_FRAME_TREE_NODE_COL_END : __ETH_FRAME_TREE_NODE_END, "FCS");
+}
+
+__static VOID __out_802_frame_bc_radio(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options) {
+  if (!_Frame) {
+    printf("[-] The given frame is NULL.");
+    return;
+  }
+#define print_H(var, ...) printf(_Options ? var##_COL : var, __VA_ARGS__)
+
+print_H(__ETH_VAR_NODE_FMT, "PHY Type         ", GetPHYDescription(_Frame->radio.phyType), "");
+print_H(__ETH_VAR_NODE_FMT, "Proprietary mode ", "None", "0");
+
+CHAR str[25] = { 0 };
+sprintf(str, "%#.1f Mb/s", _Frame->radio.dDataRate);
+print_H(__ETH_VAR_NODE_FMT, "Data rate        ", str, "");
+memset((VOID *)str, 0x00, 25);
+
+sprintf(str, "%iMHz", _Frame->radio.ulFrequency / 1000);
+print_H(__ETH_VAR_NODE_FMT, "Frequency        ", str, "");
+memset((VOID *)str, 0x00, 25);
+
+sprintf(str, "%d dBm", (UINT)(_Frame->radio.lSignalStrength));
+print_H(__ETH_VAR_NODE_FMT_END, "Signal strength  ", str, "");
+memset((VOID *)str, 0x00, 25);
+#undef print_H
 }
 
 __static VOID __out_802_frame_bc_header(__const WLANAPI_BEACON_FRAME *_Frame, DWORD _Options) {
@@ -217,19 +281,19 @@ __static VOID __out_802_frame_bc_header(__const WLANAPI_BEACON_FRAME *_Frame, DW
     return;
   }
 #define print_H(var, ...) printf(_Options ? var##_COL : var, __VA_ARGS__)
-  print_H(__ETH_VAR_NODE_FMT, "Version     ", "0",     "0 Mask 0x03");
-  print_H(__ETH_VAR_NODE_FMT, "Type        ",    "00",    "Management | 0 Mask 0x0C");
-  print_H(__ETH_VAR_NODE_FMT, "SubType     ", "10000", "Beacon | 0 Mask 0x0F");
+  CHAR fmt[30] = {0};
+  sprintf(fmt, "%#6x", _Frame->ieSSID.ieSize > 0 ? 0x80 : 0x50);
+  print_H(__ETH_VAR_NODE_FMT, "Type/Subtype ", fmt, _Frame->ieSSID.ieSize > 0 ? "Beacon frame" : "Probe response");
+  print_H(__ETH_VAR_NODE_FMT, "FrameControl ", fmt, "0-1");
+  printf("|   |   .... ..00 = Version: 0\n|   |   .... 00.. = Management frame (0)\n");
 
-  print_H(__ETH_VAR_NODE_FMT, "FrameControl", "0x8000", "0-1");
-  print_H(__ETH_VAR_NODE_FMT, "Duration    ", "0", "Microseconds | 2-3");
-  print_H(__ETH_VAR_NODE_FMT, "Destination ", "ff:ff:ff:ff:ff:ff", "Ethernet Broadcast | 4-9");
+  memset(fmt, 0x00, 30);
+  print_H(__ETH_VAR_NODE_FMT, "Duration     ", "0", "Microseconds | 2-3");
+  print_H(__ETH_VAR_NODE_FMT, "Destination  ", "ff:ff:ff:ff:ff:ff", "Ethernet Broadcast | 4-9");
 
-  CHAR *str = (CHAR *)malloc(18*sizeof(CHAR));
-  AsMAC(str, _Frame->header.ucSource);
-
-  print_H(__ETH_VAR_NODE_FMT,     "Source      ", str, "10-15");
-  print_H(__ETH_VAR_NODE_FMT_END, "BSSID       ", str, "15-21");
+  AsMAC(fmt, _Frame->header.ucSource);
+  print_H(__ETH_VAR_NODE_FMT,     "Source       ", fmt, "10-15");
+  print_H(__ETH_VAR_NODE_FMT_END, "BSSID        ", fmt, "15-21");
 #undef print_H
 }
 
@@ -239,7 +303,7 @@ __static VOID __out_802_frame_bc_body(__const WLANAPI_BEACON_FRAME *_Frame, DWOR
   CHAR *fmt = malloc(10*sizeof(CHAR));
   sprintf(fmt, "%i", _Frame->usInterval);
   print_H(__ETH_VAR_NODE_FMT, "BeaconInterval  ", fmt, "32-33");
-  sprintf(fmt, "0x%x", _Frame->usCapabilities);
+  sprintf(fmt, "%#x", _Frame->usCapabilities);
   print_H(__ETH_VAR_NODE_FMT, "CapabilityInfo  ", fmt, "");
   free(fmt);
 #undef print_H
@@ -257,34 +321,73 @@ __static VOID __out_802_ie(__const PWLANAPI_IE_BLOB _Ie, DWORD _Options, BOOLEAN
 #define CASE(ID, code) case ID: code
 #define out(var, ...) \
   printf(_End ? (_Options ? var##_END_COL : var##_END) : (_Options ? var##_COL : var), __VA_ARGS__)
-#define HP(_Ie, size, f0, f1, ...) \
+#define HP(_Ie, f0, f1, ...) \
   str = _Options ? f0 : f1; \
-  fmt = malloc((size)*sizeof(CHAR)); \
   sprintf(fmt, str, __VA_ARGS__); \
-  out(__ETH_NODE_IE, GetIETypeString(_Ie->ieId), _Ie->ieId, _Ie->ieSize, fmt); \
-  free(fmt), fmt = NULL;
+  out(__ETH_NODE_IE, GetIETypeString(_Ie->ieId), _Ie->ieId, _Ie->ieSize, fmt);
 
-  CHAR *fmt = NULL;
+  CHAR fmt[75] = {0};
   STRING str;
   switch (_Ie->ieId) {
     CASE(IE_SSID, {
       if (_Ie->ieSize == 0) {
         out(__ETH_NODE_IE, GetIETypeString(_Ie->ieId), _Ie->ieId, _Ie->ieSize, 
-        _Options ? "\033[90mBroadcast SSID\033[0m (Frame is Probe Request)" : 
-        "Broadcast SSID (Frame is Probe Request)");
+        _Options ? "\033[90mBroadcast SSID\033[0m (Frame is Probe Request)\n" : 
+        "Broadcast SSID (Frame is Probe Request)\n");
       } else {
-        HP(_Ie, _Ie->ieSize + 6, "\033[91mSSID=\033[0m%s", "SSID=%s", _Ie->pIelement)
-        }
+        CHAR name[_Ie->ieSize + 1];
+        memset((VOID *)name, 0x00, _Ie->ieSize);
+        memcpy((VOID *)name, (__const VOID *)_Ie->pIelement, _Ie->ieSize);
+        HP(_Ie, "\033[91mSSID=\033[0m%s\n", "SSID=%s\n", name);
+      }
       break;
     })
     CASE(IE_VENDOR_SPECIFIC, {
-      HP(_Ie, 45, "\033[91mOUI=\033[0m%x-%x-%x \033[91mData=\033[0m(%i bytes)", "OUI=%x:%x:%x Data=(%i bytes)",
+      HP(_Ie, 
+      "\033[91mOUI=\033[0m%2x-%2x-%2x \033[91mData=\033[0m(%i bytes)\n", 
+      "OUI=%2x:%2x:%2x Data=(%i bytes)\n",
       _Ie->pIelement[0], _Ie->pIelement[1], _Ie->pIelement[2], _Ie->ieSize)
       break;
     })
 
+    CASE(IE_DSSS_PARAMETER_SET, {
+      HP(_Ie,
+      "\033[91mChannel=\033[0m%i\n", "Channel=%i\n",
+      _Ie->pIelement[0]
+      )
+      break;
+    })
+
+    CASE(IE_SUPPORTED_RATES, {
+      HP(_Ie, 
+      "\033[91mData=\033[0m(%i bytes) \033[90m[Mbit/sec]\033[0m\n", 
+      "Data=(%i bytes) [Mbit/sec]\n", 
+      _Ie->ieSize
+      )
+      break;
+    })
+
+    CASE(IE_POWER_CONSTRAINT, {
+      HP(_Ie, 
+      "\033[91mValue=\033[0m%i\n", "Value=%i\n",
+      _Ie->pIelement[0]
+      )
+      break;
+    })
+
+    CASE(IE_COUNTRY, {
+      HP(_Ie,
+      "\033[91mCode=\033[0m%#x (%s) \033[91mEnv=\033[0m%#4x\n",
+      "Code=%#x (%s) Env=%#4x\n",
+      _Ie->pIelement[0] << 8 | _Ie->pIelement[1], 
+      "n.i.",
+      _Ie->pIelement[2]
+      )
+      break;
+    })
+
     default: {
-      HP(_Ie, 26, "\033[91mData=\033[0m(%i bytes)", "Data=(%i bytes)", _Ie->ieSize)
+      HP(_Ie, "\033[91mData=\033[0m(%i bytes)\n", "Data=(%i bytes)\n", _Ie->ieSize)
       break;
     }
   }

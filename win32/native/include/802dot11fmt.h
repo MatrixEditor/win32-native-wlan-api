@@ -3,7 +3,7 @@
 
 #include "win32wlan.h"
 
-#define FMT_OPTION_COLOUR 1
+#define FMT_OPTION_COLOR 1
 #define FMT_OPTION_DEFAULT 0
 
 /**

@@ -112,10 +112,17 @@ extern "C" {
 #define wlanapi_free(pObj) WlanFreeMemory((VOID *)pObj)
 
 /**
+ * @brief To calculate the data transfer rate in Mbps for an arbitrary array entry 
+ * rateSet[i], use the following equation:
+ */
+#define RATE_TO_MBs(usRate) (double)(((usRate) & 0x7fff) * 0.5)
+
+/**
  * @brief The value of the Capability Information field from the 802.11 Beacon or 
  * Probe Response frame received by the wireless LAN interface. This value is a set of bit flags defining the capability.
  */
 typedef enum _WLANAPI_CAPABLITY_INFO {
+
   /**
    * @brief An extended service set. A set of one or more interconnected basic 
    * service sets (BSSs) and integrated local area networks (LANs) that appears
@@ -392,6 +399,42 @@ typedef struct _WLANAPI_802DOT11_FRAME {
 
 } WLANAPI_802DOT11_FRAME, *PWLANAPI_802DOT11_FRAME;
 
+typedef struct _WLANAPI_802_RADIOTAB {
+
+  /**
+   * @brief The PHY type for this network.
+   */
+  WLANAPI_DOT11_PHY_TYPE phyType;
+
+  /**
+   * @brief The received signal strength indicator (RSSI) value, in units 
+   * of decibels referenced to 1.0 milliwatts (dBm), as detected by the
+   * wireless LAN interface driver for the AP or peer station.
+   * 
+   * @type: [long] (64 bits)
+   */
+  LONG lSignalStrength;
+
+  /**
+   * @brief The channel center frequency of the band on which the 802.11 Beacon 
+   * or Probe Response frame was received. The value of ulChCenterFrequency is 
+   * in units of kilohertz (kHz).
+   * 
+   * @note This member is only valid for PHY types that are not frequency-hopping 
+   * spread spectrum (FHSS). 
+   * 
+   * @type: [unsigned long] (64 bits)
+   */
+  ULONG ulFrequency;
+
+  /**
+   * @brief Refer to the macro RATE_TO_MBs to calculate the data transfer rate into
+   * MB/s.
+   */
+  double dDataRate;
+
+} WLANAPI_802_RADIOTAB, *PWLANAPI_802_RADIOTAB;
+
 typedef struct _WLANAPI_BEACON_HEADER {
   /**
    * @brief The frame control field specifies some informative flags 
@@ -451,6 +494,11 @@ typedef struct _WLANAPI_BEACON_HEADER {
  *      Beacon interval = 100 TU (100x 1024 microseconds or 102.4 milliseconds)
  */
 typedef struct _WLANAPI_BEACON_FRAME {
+  /**
+   * @brief Contains general information about the sender.
+   */
+  WLANAPI_802_RADIOTAB radio;
+
   /**
    * @brief the mac header contains information about the sender of this beacon 
    * frame.
@@ -657,6 +705,17 @@ __const CHAR *__cdecl __atop_iface_desc(PWLAN_INTERFACE_INFO _IfaceInfo);
 #define GetIfaceDescription(_IfaceInfo) __atop_iface_desc((PWLAN_INTERFACE_INFO) _IfaceInfo)
 
 /**
+ * @brief Returns a qualified null-terminated string that contains the profile
+ * name of the given wifi-profile.
+ * 
+ * @param _Profile the profile info
+ * @return __const char* the name of the given profile
+ * @name GetProfileName 
+ */
+__const CHAR *__cdecl __atop_profile_name(PWLAN_PROFILE_INFO _Profile);
+#define GetProfileName(_pProfile) __atop_profile_name((PWLAN_PROFILE_INFO)_pProfile)
+
+/**
  * @brief Constructs a information element structure with the given byte blob. Note, 
  * that the element pointer will be NULL if the ieId is not defined in the win32ieee802.h
  * header file.
@@ -664,10 +723,24 @@ __const CHAR *__cdecl __atop_iface_desc(PWLAN_INTERFACE_INFO _IfaceInfo);
  * @param pIeDataBlob the data blob
  * @param _Offset the current offset
  * @return __const InformationElement
+ * @name ConvertBlobToIE
  */
 __const PWLANAPI_IE_BLOB __atop_get_ieblob(__const BYTE *pIeDataBlob, __const DWORD _Offset);
 #define ConvertBlobToIE(pIeDataBlob, _Offset) \
   __atop_get_ieblob((__const BYTE *)pIeDataBlob, (__const DWORD) _Offset)
+
+/**
+ * @brief Creates a DOT11_BSSID_LIST for one given MAC-Address. The DOT11_BSSID_LIST 
+ * structure contains a list of basic service set (BSS) identifiers.
+ * 
+ * @param _NDISType Specifies the type of NDIS object that a structure describes.
+ * @param _Address An IEEE media access control (MAC) address.
+ * @return [unsigned long] errors
+ * @name CreateBSSIDList
+ */
+DWORD __atop_get_bssidlist(__const UCHAR _NDISType, __const DOT11_MAC_ADDRESS *_Address, PDOT11_BSSID_LIST _List);
+#define CreateBSSIDList(_NDISType, _pAddr, _pList) \
+  __atop_get_bssidlist((__const UCHAR)_NDISType, (__const DOT11_MAC_ADDRESS *)_pAddr, (PDOT11_BSSID_LIST)_pList)
 
 /**
  * @brief A convenient macro to start 'capturing' packets. The WlanScan function requests 
@@ -682,16 +755,43 @@ __const PWLANAPI_IE_BLOB __atop_get_ieblob(__const BYTE *pIeDataBlob, __const DW
   }
 
 /**
- * @brief A simple macro to get the NetworkBssList from the native wireless api with less
- * parameters.
+ * @brief A simple macro to get the NetworkBssList from the native wireless api
+ *  with less parameters.
  */
 #define NETBssList(_Client, _pGuid, _pList) \
   WlanGetNetworkBssList((HANDLE)hClient, (__const GUID *)_pGuid, NULL, (DOT11_BSS_TYPE)1, FALSE, NULL, _pList)
 
+/**
+ * @brief A simple macro to get the available WLAN-Interfaces from the native
+ * wireless.
+ */
+#define NETGetInterfaces(_Client, _pList) \
+  WlanEnumInterfaces((HANDLE)_Client, NULL, (PWLAN_INTERFACE_INFO_LIST *)_pList)
+
+/**
+ * @brief Before the program stops the session to the native wifi API should be
+ * closed for a clean exit.
+ */
+#define CloseSession(_Client) WlanCloseHandle(_Client, NULL);
+
+/**
+ * @brief A Wrapper-Macro to define a callback function but don't implement it.
+ * This macro expands to:
+ *    void <name>(PWLAN_NOTIFICATION_DATA _Data, PVOID _Context) 
+ */
 #define DefCallBackFn(name) VOID name(PWLAN_NOTIFICATION_DATA _Data, PVOID _Context)
+
+/**
+ * @brief A Wrapper-Macro to define a callback function and implement it. This 
+ * macro expands to:
+ *    void <name>(PWLAN_NOTIFICATION_DATA _Data, PVOID _Context) {
+ *      if (_Data->NotificationCode == WLANAPI_NOTE_ACM_SCAN_COMLETE) <code>
+ *    } 
+ */
 #define ImplCallBackFn(name, code) VOID name(PWLAN_NOTIFICATION_DATA _Data, PVOID _Context) { \
   if (_Data->NotificationCode == WLANAPI_NOTE_ACM_SCAN_COMLETE) code \
 }
+
 
 #if defined(__cplusplus)
 }

@@ -1,5 +1,7 @@
 #include "../include/win32wlan.h"
 
+static DWORD CaptureSequence = 0x01;
+
 DWORD __atof_register_cb(HANDLE _Client, WLAN_NOTIFICATION_CALLBACK _Callback, PVOID _Context) 
 {
   DWORD result = ERROR_SUCCESS;
@@ -139,9 +141,15 @@ DWORD __etop_ieee802_beacon(__const PWLAN_BSS_ENTRY _Entry, PWLANAPI_BEACON_FRAM
   if (!_Frame || !_Entry) {
     return ERROR_INVALID_PARAMETER;
   }
+  //radiotap header
+  _Frame->radio.phyType = (WLANAPI_DOT11_PHY_TYPE)_Entry->dot11BssPhyType;
+  _Frame->radio.lSignalStrength = _Entry->lRssi;
+  _Frame->radio.ulFrequency = _Entry->ulChCenterFrequency;
+  _Frame->radio.dDataRate = RATE_TO_MBs(_Entry->wlanRateSet.usRateSet[0]);
+
   // header
   _Frame->header.usFrameControl = 0x00, _Frame->header.usDuration = 0x00;
-  _Frame->header.usSeq = 0x00;
+  _Frame->header.usSeq = CaptureSequence++;
   memset((VOID *)_Frame->header.ucDestination, 0xff, 6);
   memcpy((VOID *)_Frame->header.ucSource, (__const VOID *)_Entry->dot11Bssid, 6);
   memcpy((VOID *)_Frame->header.ucBSSID, (__const VOID *)_Entry->dot11Bssid, 6);
@@ -192,4 +200,28 @@ __const PWLANAPI_IE_BLOB __atop_get_ieblob(__const BYTE *pIeDataBlob, __const DW
   ie->pIelement = (BYTE *)malloc(size);
   memcpy((VOID *)ie->pIelement, (__const VOID *)(pIeDataBlob + _Offset + 2), size);
   return ie;
+}
+
+__const CHAR *__atop_profile_name(PWLAN_PROFILE_INFO _Profile) {
+  if (!_Profile) {
+    return "";
+  }
+
+  CHAR *name = (CHAR *)malloc(WLAN_MAX_NAME_LENGTH);
+  if (!name) {
+    return "";
+  }
+
+  memset((VOID *)name, 0x00, WLAN_MAX_NAME_LENGTH);
+  DWORD i = 0;
+  WCHAR c = 0x00;
+  while ((c = _Profile->strProfileName[i])) {
+    name[i++] = (CHAR) c;
+  }
+
+  return name;
+}
+
+DWORD __atop_get_bssidlist(__const UCHAR _NDISType, __const DOT11_MAC_ADDRESS *_Address, PDOT11_BSSID_LIST _List) {
+  return -1;
 }

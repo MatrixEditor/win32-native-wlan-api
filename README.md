@@ -170,7 +170,7 @@ Lets have a quick look at the callback function. There are two ways to implement
 
 The program `capture.test.exe` can be used to display all captured frames with the following output (example).
 
-Though, colours are not supported by all terminals on `Windows` you can tell the program to use the default color-scheme with `--no-colour`.
+Though, colors are not supported by all terminals on `Windows` you can tell the program to use the default color-scheme with `--no-color`.
 
 **Note:** Information Elements with a fully uppercase name got no implementation for printing (default setting is used).
 
@@ -178,7 +178,7 @@ Though, colours are not supported by all terminals on `Windows` you can tell the
 
 
 
-_For more examples, please refer to the [Documentation](https://example.com)_
+_For more examples, please refer to the [Documentation](https://example.com)_ (in progress).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

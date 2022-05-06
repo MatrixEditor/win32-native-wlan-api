@@ -1,0 +1,9 @@
+{
+  "files.associations": {
+    "windows.h": "c",
+    "win32wlan.h": "c",
+    "win32pcap.h": "c",
+    "wlanapi.h": "c"
+  },
+  "FSharp.suggestGitignore": false
+}
