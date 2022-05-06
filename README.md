@@ -56,12 +56,10 @@
 
 <!-- ABOUT THE PROJECT -->
 ## About The Project
----
+
 To be able to show wireless APs and sniffing their capabilities on `Windows` additional libraries like `Winpcap` or Wireless Adapters which support the "monitor" mode are needed. 
 
 This API makes use of the native Wlan-API provided by Windows which supports "receiving" `Beacon Frames` from other APs. Unlike other tools this API does **not** require administrator access to execute the declared functions.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
 
 ### Built With
 
@@ -73,7 +71,7 @@ This API makes use of the native Wlan-API provided by Windows which supports "re
 
 <!-- GETTING STARTED -->
 ## Getting Started
----
+
 This is an example of how you may give instructions on setting up your project locally.
 To get a local copy up and running follow these simple example steps.
 
@@ -107,7 +105,7 @@ This is an example of how to list things you need to use the software and how to
 
 <!-- USAGE EXAMPLES -->
 ## Usage
----
+
 ### Capture
 A first example shows how to capture `Beacon Frames` with the usage of this API: First, an internal session to query properties and start a WLAN scan is needed. This session can be created through the following method:
 
@@ -184,7 +182,7 @@ _For more examples, please refer to the [Documentation](https://example.com)_ (i
 
 <!-- ROADMAP -->
 ## Roadmap
----
+
 - [x] Print 802.11 Beacon Frames
 - [ ] Save Frames to Pcap-Files
 - [ ] Language support (maybe):
@@ -199,7 +197,7 @@ See the [open issues](https://github.com/MatrixEditor/win32-native-wlan-api/issu
 
 <!-- CONTRIBUTING -->
 ## Contributing
----
+
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
@@ -214,7 +212,7 @@ If you have a suggestion that would make this better, please fork the repo and c
 
 <!-- LICENSE -->
 ## License
----
+
 Distributed under the GNU GP License. See `LICENSE.txt` for more information.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -223,7 +221,7 @@ Distributed under the GNU GP License. See `LICENSE.txt` for more information.
 
 <!-- MARKDOWN LINKS & IMAGES -->
 [contributors-shield]: https://img.shields.io/github/contributors/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
-[contributors-url]: https://github.com/github_username/repo_name/graphs/contributors
+[contributors-url]: https://github.com/MatrixEditor/win32-native-wlan-api/graphs/contributors
 [stars-shield]: https://img.shields.io/github/stars/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
 [stars-url]: https://github.com/MatrixEditor/win32-native-wlan-api/stargazers
 [issues-shield]: https://img.shields.io/github/issues/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
