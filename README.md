@@ -2,7 +2,6 @@
 
 <!-- PROJECT SHIELDS -->
 [![Contributors][contributors-shield]][contributors-url]
-[![Stargazers][stars-shield]][stars-url]
 [![Issues][issues-shield]][issues-url]
 [![GNU GPL][license-shield]][license-url]
 
@@ -222,10 +221,8 @@ Distributed under the GNU GP License. See `LICENSE.txt` for more information.
 <!-- MARKDOWN LINKS & IMAGES -->
 [contributors-shield]: https://img.shields.io/github/contributors/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
 [contributors-url]: https://github.com/MatrixEditor/win32-native-wlan-api/graphs/contributors
-[stars-shield]: https://img.shields.io/github/stars/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
-[stars-url]: https://github.com/MatrixEditor/win32-native-wlan-api/stargazers
 [issues-shield]: https://img.shields.io/github/issues/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
 [issues-url]: https://github.com/MatrixEditor/win32-native-wlan-api/issues
 [license-shield]: https://img.shields.io/github/license/MatrixEditor/win32-native-wlan-api.svg?style=for-the-badge
-[license-url]: https://github.com/MatrixEditor/win32-native-wlan-api/blob/master/LICENSE.txt
+[license-url]: https://github.com/MatrixEditor/win32-native-wlan-api/blob/master/LICENSE
 [product-screenshot]: docs/example_capture.png

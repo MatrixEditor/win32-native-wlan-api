@@ -332,8 +332,8 @@ __static VOID __out_802_ie(__const PWLANAPI_IE_BLOB _Ie, DWORD _Options, BOOLEAN
     CASE(IE_SSID, {
       if (_Ie->ieSize == 0) {
         out(__ETH_NODE_IE, GetIETypeString(_Ie->ieId), _Ie->ieId, _Ie->ieSize, 
-        _Options ? "\033[90mBroadcast SSID\033[0m (Frame is Probe Request)\n" : 
-        "Broadcast SSID (Frame is Probe Request)\n");
+        _Options ? "\033[90mBroadcast SSID\033[0m (Frame is Probe Response)\n" : 
+        "Broadcast SSID (Frame is Probe Response)\n");
       } else {
         CHAR name[_Ie->ieSize + 1];
         memset((VOID *)name, 0x00, _Ie->ieSize);
